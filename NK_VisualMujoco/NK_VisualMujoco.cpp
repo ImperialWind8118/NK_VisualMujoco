@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstring>
 
-// MuJoCo 全局对象
 mjModel* m = nullptr;
 mjData* d = nullptr;
 mjvScene     scn;
@@ -11,69 +10,72 @@ mjvCamera    cam;
 mjvOption    opt;
 mjrContext   con;
 
-int main()
-{
-    // 1. 加载模型（先用一个内置的简单测试模型）
-    const char* xml = R"(
-        <mujoco>
-          <worldbody>
-            <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
-            <geom type="plane" size="1 1 0.1" rgba=".9 .9 .9 1"/>
-            <body pos="0 0 1">
-              <joint type="free"/>
-              <geom type="sphere" size="0.1" rgba="1 0 0 1"/>
-            </body>
-          </worldbody>
-        </mujoco>
-    )";
+// 鼠标状态
+bool  button_left = false;
+bool  button_right = false;
+double lastx = 0, lasty = 0;
 
+// 鼠标按键回调
+void mouse_button(GLFWwindow* window, int button, int act, int mods) {
+    button_left = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    button_right = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+    glfwGetCursorPos(window, &lastx, &lasty);
+}
+
+// 鼠标移动回调（拖拽旋转/平移）
+void mouse_move(GLFWwindow* window, double xpos, double ypos) {
+    if (!button_left && !button_right) return;
+
+    double dx = xpos - lastx;
+    double dy = ypos - lasty;
+    lastx = xpos;
+    lasty = ypos;
+
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    mjtMouse action;
+    if (button_right)
+        action = mjMOUSE_MOVE_V;        // 右键：上下平移
+    else if (button_left)
+        action = mjMOUSE_ROTATE_V;      // 左键：旋转
+
+    mjv_moveCamera(m, action, dx / height, dy / height, &scn, &cam);
+}
+
+// 滚轮回调（缩放）
+void scroll(GLFWwindow* window, double xoffset, double yoffset) {
+    mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
+}
+
+int main() {
     char error[1000];
-    m = mj_loadXML(nullptr, nullptr, error, 1000);
-    // 用字符串加载
-    m = mj_loadXML(nullptr, nullptr, error, 1000);
-
-    // 直接从字符串加载
-    mjVFS vfs;
-    mj_defaultVFS(&vfs);
-    mj_addBufferVFS(&vfs, "test.xml", xml, strlen(xml));
-    m = mj_loadXML("test.xml", &vfs, error, 1000);
-
-    if (!m) {
-        printf("模型加载失败: %s\n", error);
-        return 1;
-    }
+    m = mj_loadXML("model_formal/Adroit/Adroit_hand.xml", nullptr, error, 1000);
+    if (!m) { printf("模型加载失败: %s\n", error); return 1; }
     d = mj_makeData(m);
 
-    // 2. 初始化 GLFW 窗口
-    if (!glfwInit()) {
-        printf("GLFW 初始化失败\n");
-        return 1;
-    }
+    if (!glfwInit()) return 1;
     GLFWwindow* window = glfwCreateWindow(1200, 900, "MuJoCo 灵巧手仿真", nullptr, nullptr);
-    if (!window) {
-        printf("窗口创建失败\n");
-        return 1;
-    }
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
-    // 3. 初始化 MuJoCo 渲染器
+    // 注册鼠标回调
+    glfwSetMouseButtonCallback(window, mouse_button);
+    glfwSetCursorPosCallback(window, mouse_move);
+    glfwSetScrollCallback(window, scroll);
+
     mjv_defaultCamera(&cam);
     mjv_defaultOption(&opt);
     mjv_makeScene(m, &scn, 2000);
     mjr_makeContext(m, &con, mjFONTSCALE_150);
 
-    // 4. 主循环
     while (!glfwWindowShouldClose(window)) {
-        // 物理步进
         mj_step(m, d);
 
-        // 获取窗口尺寸
         int W, H;
         glfwGetFramebufferSize(window, &W, &H);
         mjrRect viewport = { 0, 0, W, H };
 
-        // 渲染
         mjv_updateScene(m, d, &opt, nullptr, &cam, mjCAT_ALL, &scn);
         mjr_render(viewport, &scn, &con);
 
@@ -81,7 +83,6 @@ int main()
         glfwPollEvents();
     }
 
-    // 5. 清理
     mjr_freeContext(&con);
     mjv_freeScene(&scn);
     mj_deleteData(d);
