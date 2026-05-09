@@ -1,4 +1,4 @@
-﻿#include <mujoco/mujoco.h>
+﻿#include "controller.h"
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <cstring>
@@ -45,15 +45,20 @@ void mouse_move(GLFWwindow* window, double xpos, double ypos) {
 
 // 滚轮回调（缩放）
 void scroll(GLFWwindow* window, double xoffset, double yoffset) {
-	mjv_moveCamera(model, mjMOUSE_ZOOM, 0, 0.05 * yoffset, &scn, &cam);
+	mjv_moveCamera(model, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
 }
 
 int main(void) {
+	// 加载模型
 	char error[1000];
 	model = mj_loadXML("model_formal/Adroit/Adroit_hand.xml", nullptr, error, 1000);
 	if (!model) { printf("模型加载失败: %s\n", error); return 1; }
 	data = mj_makeData(model);
 
+	// 初始化控制器
+	controller_init(model, data);
+
+	// 初始化GLFW窗口
 	if (!glfwInit()) return 1;
 	GLFWwindow* window = glfwCreateWindow(1200, 900, "MuJoCo 灵巧手仿真", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
@@ -64,17 +69,20 @@ int main(void) {
 	glfwSetCursorPosCallback(window, mouse_move);
 	glfwSetScrollCallback(window, scroll);
 
+	// 初始化Mujoco渲染器
 	mjv_defaultCamera(&cam);
 	mjv_defaultOption(&opt);
 	mjv_makeScene(model, &scn, 2000);
 	mjr_makeContext(model, &con, mjFONTSCALE_150);
 
+	// 主循环
 	while (!glfwWindowShouldClose(window)) {
+		controller_step(model, data);
 		mj_step(model, data);
 
-		int W, H;
-		glfwGetFramebufferSize(window, &W, &H);
-		mjrRect viewport = { 0, 0, W, H };
+		int windowWidth, windowHeight;
+		glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+		mjrRect viewport = { 0, 0, windowWidth, windowHeight };
 
 		mjv_updateScene(model, data, &opt, nullptr, &cam, mjCAT_ALL, &scn);
 		mjr_render(viewport, &scn, &con);
@@ -83,6 +91,7 @@ int main(void) {
 		glfwPollEvents();
 	}
 
+	// 清理资源
 	mjr_freeContext(&con);
 	mjv_freeScene(&scn);
 	mj_deleteData(data);
