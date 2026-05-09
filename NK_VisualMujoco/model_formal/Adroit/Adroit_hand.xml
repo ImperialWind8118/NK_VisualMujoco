@@ -12,8 +12,8 @@
 	<!--总共include4个子文件，分别为-->
 
 	<include file="resources/assets.xml"/>  
-	<include file="resources/tendon_torque_actuation.xml"/>  <!-- Tendon torque motors -->
-	<!-- <include file="resources/joint_position_actuation.xml"/> --> <!-- Joint position servos -->
+	<!--<include file="resources/tendon_torque_actuation.xml"/>-->  <!-- Tendon torque motors -->
+    <include file="resources/joint_position_actuation.xml"/>  <!-- Joint position servos -->
 
 	<asset>
 		<texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2"
