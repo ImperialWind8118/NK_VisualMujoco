@@ -1,5 +1,5 @@
 <mujocoinclude>
-<!-- =================================================
+	<!-- =================================================
 	Copyright 2017 Vikash Kumar
 	Model   :: ADROIT MANIPULATION PLATFORM (MuJoCoV2.0)
 	Author  :: Vikash Kumar (vikashplus@gmail.com)
@@ -21,8 +21,7 @@
 
 	<option	timestep="0.002"
 			iterations="20"
-			apirate="200"
-			gravity="0 0 0">
+			apirate="200">
 	</option>
 
 	<visual>
@@ -62,14 +61,11 @@
 			<tendon limited="true"/>
 			<!--<mesh scale="0.001 0.001 0.001"/>-->
 			<site size="0.005" rgba=".4 .9 .4 1"/>
-			<!--EQUIVALENT JOINT MOTORS-->
-			<general ctrllimited="true" ctrlrange="-1 1" dyntype="none" gaintype="fixed"/>
 
 			<!--Touch geoms-->
 			<default class="D_Touch">
 				<site type="box" rgba=".8 .8 .8 .25" group="4"/>
 			</default>
-
 
 			<!--Collission geoms-->
 			<default class="DC_Hand">
@@ -88,6 +84,8 @@
 				<joint type="free" damping="0" armature="0" limited="false"/>
 			</default>
 
+			<!--EQUIVALENT JOINT MOTORS-->
+			<general ctrllimited="true" ctrlrange="-1 1" dyntype="none" gaintype="fixed"/>
 		</default>
 	</default>
 
@@ -347,11 +345,8 @@
 		<touch name="ST_Tch_lfproximal"	site="Tch_lfproximal"/>
 		<touch name="ST_Tch_lfmetacarpal"	site="Tch_lfmetacarpal"/>
 
+
 		<touch name="ST_Tch_thtip"	site="Tch_thtip"/>
-
-		<!-- ====== Torque Sensors ======= -->
-		
-
 	</sensor>
 
 </mujocoinclude>

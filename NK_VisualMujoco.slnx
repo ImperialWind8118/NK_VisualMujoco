@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="NK_VisualMujoco/NK_VisualMujoco.vcxproj" />
+  <Project Path="NK_VisualMujoco/NK_VisualMujoco.vcxproj" Id="2d01f48b-4b5e-44e1-802b-dd349f4ec790" />
 </Solution>

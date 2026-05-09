@@ -1,5 +1,5 @@
 <mujocoinclude>
-<!-- =================================================
+	<!-- =================================================
 	Copyright 2017 Vikash Kumar
 	Model   :: ADROIT MANIPULATION PLATFORM (MuJoCoV2.0)
 	Author  :: Vikash Kumar (vikashplus@gmail.com)
@@ -74,7 +74,8 @@
 							</body>
 						</body>
 					</body>
-				</body> <!--First Finger End-->
+				</body>
+				<!--First Finger End-->
 
 
 
@@ -108,7 +109,8 @@
 							</body>
 						</body>
 					</body>
-				</body> <!--Middle Finger End-->
+				</body>
+				<!--Middle Finger End-->
 
 
 
@@ -142,7 +144,8 @@
 							</body>
 						</body>
 					</body>
-				</body> <!--Ring Finger End-->
+				</body>
+				<!--Ring Finger End-->
 
 
 
@@ -185,7 +188,8 @@
 							</body>
 						</body>
 					</body>
-				</body> <!--Little Finger End-->
+				</body>
+				<!--Little Finger End-->
 
 
 
@@ -225,9 +229,13 @@
 							</body>
 						</body>
 					</body>
-				</body> <!--Thumb Finger End-->
-			</body> <!--Palm Ends-->
-		</body> <!--Wrist Ends-->
-	</body> <!--Forearm/ Hand Actuation Ends-->
+				</body>
+				<!--Thumb Finger End-->
+			</body>
+			<!--Palm Ends-->
+		</body>
+		<!--Wrist Ends-->
+	</body>
+	<!--Forearm/ Hand Actuation Ends-->
 
 </mujocoinclude>
