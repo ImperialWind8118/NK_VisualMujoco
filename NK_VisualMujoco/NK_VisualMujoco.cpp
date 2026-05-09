@@ -1,4 +1,5 @@
 ﻿#include "controller.h"
+#include <mujoco/mujoco.h>
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <cstring>
@@ -58,6 +59,7 @@ int main(void) {
 	// 初始化控制器
 	controller_init(model, data);
 
+
 	// 初始化GLFW窗口
 	if (!glfwInit()) return 1;
 	GLFWwindow* window = glfwCreateWindow(1200, 900, "MuJoCo 灵巧手仿真", nullptr, nullptr);
@@ -77,8 +79,10 @@ int main(void) {
 
 	// 主循环
 	while (!glfwWindowShouldClose(window)) {
-		controller_step(model, data);
-		mj_step(model, data);
+		for (int i = 0; i < 2; i++) {
+			controller_step(model, data);
+			mj_step(model, data);
+		}
 
 		int windowWidth, windowHeight;
 		glfwGetFramebufferSize(window, &windowWidth, &windowHeight);

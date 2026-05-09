@@ -78,12 +78,12 @@ static void setThumb(Pose& p, double j4, double j3, double j2, double j1, double
 
 static void buildPoseSequence() {
 
-    /* 0: 张开手掌
+    // 0: 张开手掌
     {
         Pose& p = poses[numPoses++];
         p.name = "Open"; p.holdTime = 1.5;
         memset(p.ctrl, 0, sizeof(p.ctrl));
-    }   */
+    }   
 
     // 1: 握拳
     {
