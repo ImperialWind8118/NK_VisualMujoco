@@ -39,9 +39,27 @@
     <ClCompile Include="imgui\imgui_widgets.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="mode1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mode2.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="controller.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="app_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mode1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mode2.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

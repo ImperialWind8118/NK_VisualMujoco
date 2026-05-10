@@ -1,4 +1,7 @@
-﻿#include "controller.h"
+﻿#if 0
+
+
+#include "controller.h"
 #include <mujoco/mujoco.h>
 #include <GLFW/glfw3.h>
 #include <cstdio>
@@ -398,3 +401,6 @@ int main(void)
     glfwTerminate();
     return 0;
 }
+
+
+#endif
