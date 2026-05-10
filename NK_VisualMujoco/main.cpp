@@ -75,6 +75,96 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
     mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
 }
 
+static void apply_dark_theme()
+{
+    ImGuiStyle& s = ImGui::GetStyle();
+
+    // ===== 圆角与边框 =====
+    s.WindowRounding = 6.0f;
+    s.FrameRounding = 4.0f;
+    s.GrabRounding = 4.0f;
+    s.ScrollbarRounding = 4.0f;
+    s.WindowBorderSize = 1.0f;
+    s.FrameBorderSize = 0.5f;
+
+    // ===== 间距 =====
+    s.WindowPadding = ImVec2(10, 8);
+    s.FramePadding = ImVec2(6, 3);
+    s.ItemSpacing = ImVec2(6, 4);
+
+    // ===== 颜色 =====
+    ImVec4* c = s.Colors;
+
+    // 背景
+    c[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.08f, 0.12f, 0.92f);
+    c[ImGuiCol_ChildBg] = ImVec4(0.04f, 0.06f, 0.10f, 0.80f);
+    c[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.10f, 0.16f, 0.95f);
+
+    // 文字
+    c[ImGuiCol_Text] = ImVec4(0.85f, 0.92f, 1.00f, 1.00f);
+    c[ImGuiCol_TextDisabled] = ImVec4(0.35f, 0.48f, 0.60f, 1.00f);
+
+    // 边框
+    c[ImGuiCol_Border] = ImVec4(0.12f, 0.32f, 0.52f, 0.70f);
+    c[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+
+    // 标题栏
+    c[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.08f, 0.14f, 1.00f);
+    c[ImGuiCol_TitleBgActive] = ImVec4(0.05f, 0.16f, 0.30f, 1.00f);
+    c[ImGuiCol_TitleBgCollapsed] = ImVec4(0.02f, 0.05f, 0.10f, 0.80f);
+
+    // Frame（输入框/进度条底色）
+    c[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.14f, 0.20f, 0.80f);
+    c[ImGuiCol_FrameBgHovered] = ImVec4(0.14f, 0.22f, 0.32f, 0.80f);
+    c[ImGuiCol_FrameBgActive] = ImVec4(0.16f, 0.26f, 0.40f, 0.80f);
+
+    // 滑块（赛博蓝高亮）
+    c[ImGuiCol_SliderGrab] = ImVec4(0.00f, 0.72f, 1.00f, 1.00f);
+    c[ImGuiCol_SliderGrabActive] = ImVec4(0.20f, 0.88f, 1.00f, 1.00f);
+    c[ImGuiCol_CheckMark] = ImVec4(0.00f, 0.85f, 1.00f, 1.00f);
+
+    // 按钮
+    c[ImGuiCol_Button] = ImVec4(0.05f, 0.22f, 0.42f, 0.85f);
+    c[ImGuiCol_ButtonHovered] = ImVec4(0.00f, 0.52f, 0.85f, 0.90f);
+    c[ImGuiCol_ButtonActive] = ImVec4(0.00f, 0.68f, 1.00f, 1.00f);
+
+    // Header（Columns表头/可折叠项）
+    c[ImGuiCol_Header] = ImVec4(0.00f, 0.45f, 0.75f, 0.50f);
+    c[ImGuiCol_HeaderHovered] = ImVec4(0.00f, 0.60f, 0.90f, 0.70f);
+    c[ImGuiCol_HeaderActive] = ImVec4(0.00f, 0.72f, 1.00f, 0.80f);
+
+    // 分隔线
+    c[ImGuiCol_Separator] = ImVec4(0.12f, 0.32f, 0.52f, 0.80f);
+    c[ImGuiCol_SeparatorHovered] = ImVec4(0.20f, 0.55f, 0.80f, 0.90f);
+    c[ImGuiCol_SeparatorActive] = ImVec4(0.25f, 0.70f, 1.00f, 1.00f);
+
+    // 滚动条
+    c[ImGuiCol_ScrollbarBg] = ImVec4(0.04f, 0.06f, 0.10f, 0.80f);
+    c[ImGuiCol_ScrollbarGrab] = ImVec4(0.14f, 0.32f, 0.52f, 0.80f);
+    c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.18f, 0.48f, 0.72f, 0.90f);
+    c[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.22f, 0.62f, 0.90f, 1.00f);
+
+    // 进度条填充色（mode1 关节监测用到）
+    c[ImGuiCol_PlotHistogram] = ImVec4(0.00f, 0.72f, 1.00f, 0.90f);
+    c[ImGuiCol_PlotHistogramHovered] = ImVec4(0.20f, 0.88f, 1.00f, 1.00f);
+
+    // 曲线（PlotLines，mode2 收敛曲线用到）
+    c[ImGuiCol_PlotLines] = ImVec4(0.00f, 0.72f, 1.00f, 1.00f);
+    c[ImGuiCol_PlotLinesHovered] = ImVec4(0.20f, 0.88f, 1.00f, 1.00f);
+
+    // 表格（mode2 参数对比用到）
+    c[ImGuiCol_TableHeaderBg] = ImVec4(0.06f, 0.12f, 0.22f, 1.00f);
+    c[ImGuiCol_TableBorderStrong] = ImVec4(0.14f, 0.34f, 0.54f, 1.00f);
+    c[ImGuiCol_TableBorderLight] = ImVec4(0.08f, 0.20f, 0.36f, 1.00f);
+    c[ImGuiCol_TableRowBgAlt] = ImVec4(0.06f, 0.10f, 0.16f, 0.50f);
+
+    // 拖拽
+    c[ImGuiCol_DragDropTarget] = ImVec4(0.00f, 0.85f, 1.00f, 0.90f);
+
+    // 导航高亮
+    c[ImGuiCol_NavHighlight] = ImVec4(0.00f, 0.72f, 1.00f, 1.00f);
+}
+
 // ===== 起始菜单 =====
 static void render_menu()
 {
@@ -118,6 +208,7 @@ int main(void)
     d = mj_makeData(m);
     baseTimestep = m->opt.timestep;
 
+
     if (!glfwInit()) return 1;
     GLFWwindow* window = glfwCreateWindow(1280, 960, "灵巧手仿真平台", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -126,23 +217,41 @@ int main(void)
     glfwSetCursorPosCallback(window, mouse_move);
     glfwSetScrollCallback(window, scroll);
 
+
     mjv_defaultCamera(&cam);
     mjv_defaultOption(&opt);
     mjv_defaultPerturb(&pert);
     mjv_makeScene(m, &scn, 4000);
     mjr_makeContext(m, &con, mjFONTSCALE_150);
 
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msyh.ttc", 16.0f, nullptr,
+
+    // ===== 字体：Consolas（英文/数字）+ msyh（中文）合并 =====
+    ImFontConfig baseCfg;
+    baseCfg.OversampleH = 2;
+    baseCfg.OversampleV = 2;
+    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/consola.ttf", 15.5f, &baseCfg);
+
+    ImFontConfig mergeCfg;
+    mergeCfg.MergeMode = true;
+    mergeCfg.OversampleH = 1;
+    mergeCfg.OversampleV = 1;
+    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msyh.ttc", 15.5f, &mergeCfg,
         io.Fonts->GetGlyphRangesChineseFull());
-    ImGui::StyleColorsDark();
+
+    // ===== 应用暗黑主题 =====
+    apply_dark_theme();
+
     ImGui_ImplGlfw_InitForOpenGL(window, false);
     ImGui_ImplOpenGL3_Init("#version 130");
 
+
     // 为菜单背景做一次初始场景更新
     mjv_updateScene(m, d, &opt, nullptr, &cam, mjCAT_ALL, &scn);
+
 
     while (!glfwWindowShouldClose(window))
     {
