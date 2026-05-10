@@ -109,7 +109,7 @@ void mode1_render_ui()
     ImGui::Begin("仿真控制", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
     ImGui::TextDisabled("Ctrl + 左键拖拽：移动指节");
-    ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 3.0f, "%.2fx");
+    ImGui::SliderFloat("时间流逝速度", &timeScale, 0.0f, 3.0f, "%.2fx");
     if (ImGui::Button("返回主菜单")) { mode1_cleanup(); currentMode = AppMode::MENU; }
     ImGui::End();
 
