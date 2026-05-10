@@ -16,9 +16,15 @@
     <include file="resources/joint_position_actuation.xml"/>  <!-- Joint position servos -->
 
 	<asset>
-		<texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2"
-			width="512" height="512"/>
-		<material name='MatGnd' reflectance='0.5' texture="texplane" texrepeat="2 2" texuniform="true"/>
+		<texture name="skybox" type="skybox" builtin="gradient"
+				 rgb1="0.05 0.10 0.25" rgb2="0.01 0.02 0.05"
+				 width="512" height="512"/>
+
+		<texture name="texplane" type="2d" builtin="checker"
+				 rgb1="0.10 0.16 0.25" rgb2="0.04 0.08 0.14"
+				 width="512" height="512"/>
+		<material name='MatGnd' reflectance='0.8' shininess='0.5'
+				  texture="texplane" texrepeat="4 4" texuniform="true"/>
 	</asset>
 
 	<!-- ======= WORLD ======= -->
@@ -36,10 +42,11 @@
 			<include file="resources/chain.xml"/>	<!--此处include了chain-->
 		</body>
 
+		<!--
 		<body name="ball" pos=".0 -.1 .4">
 			<geom type="sphere" size=".015" rgba=".7 .2 .2 1"/>
 			<joint name="falling_ball" class="free"/>
-		</body>
+		</body>	-->
 
 	</worldbody>
 

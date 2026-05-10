@@ -5,11 +5,9 @@
 
 static constexpr double PI = 3.14159265358979323846;
 static constexpr int MAX_ACT = 30;
-static constexpr double BLEND_TIME = 1.0;  // 姿态过渡时间（秒）
+static constexpr double BLEND_TIME = 1.0;  
 
-// ===================== 执行器索引缓存 =====================
 // 在 controller_init 中通过名字查找并记录每个执行器的编号
-// 这样后续代码不需要硬编码数字索引
 static struct {
     int WRJ1 = -1, WRJ0 = -1;
     int FFJ3 = -1, FFJ2 = -1, FFJ1 = -1, FFJ0 = -1;   // 食指
@@ -21,7 +19,7 @@ static struct {
 
 static int nu = 0;  // 执行器总数
 
-// ===================== 姿态系统 =====================
+// 姿态系统
 struct Pose {
     const char* name;          // 姿态名称（调试用）
     double ctrl[MAX_ACT];      // 每个执行器的目标角度
@@ -34,7 +32,6 @@ static int poseIdx = 0;
 static double elapsed = 0.0;
 static double prevCtrl[MAX_ACT] = {};
 
-// ===================== 工具函数 =====================
 
 // 通过名字查找执行器编号
 static int findAct(mjModel* m, const char* name) {
@@ -72,7 +69,7 @@ static void setThumb(Pose& p, double j4, double j3, double j2, double j1, double
     if (A.THJ0 >= 0) p.ctrl[A.THJ0] = j0;
 }
 
-// ===================== 姿态定义 =====================
+// 姿态定义
 // 每个姿态就是一组目标角度 + 保持时间
 // 程序运行时会按顺序循环播放，姿态之间用余弦曲线平滑过渡
 
@@ -136,7 +133,7 @@ static void buildPoseSequence() {
     }
 }
 
-// ===================== 公开接口 =====================
+// 公开接口，由 main.cpp 调用
 
 void controller_init(mjModel* m, mjData* d)
 {

@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <vector>
 
-// ===== 可调参数 =====
+// 可调参数
 static const char* TARGET_JOINT = "FFJ2";
 static const char* TARGET_ACT = "A_FFJ2";
 static constexpr double EXCITE_AMP = 0.6;   // rad幅度（0.8±0.6 在 [0,1.6] 内）
@@ -14,7 +14,7 @@ static constexpr int    WINDOW_SIZE = 50;   // 滑动窗口大小
 static constexpr int    LS_INTERVAL = 3;    // 每3个新样本求解一次
 static constexpr int    HIST_LEN = 200;
 
-// ===== 运行状态 =====
+// 运行状态
 static int    targetDof = -1;
 static int    targetAct = -1;
 static double J_true = 1.0;
@@ -24,26 +24,24 @@ static double B_hat = 0.0;
 static double elapsed = 0.0;
 static bool   collecting = true;  // 未达MAX_SAMPLES时持续采样
 
-// ===== LS 数据缓冲 =====
+// LS（最小二乘法） 数据缓冲
 static double lsA[WINDOW_SIZE][2];  // 循环缓冲，只保留最近50个样本
 static double lsT[WINDOW_SIZE];
-static int    lsCount = 0; // 累计总样本数（可超过WINDOW_SIZE）
+static int    lsCount = 0;          // 累计总样本数（可超过WINDOW_SIZE）
 static int    lsSinceLastSolve = 0;
 
-// ===== 收敛历史（环形缓冲）=====
+// 收敛历史（环形缓冲）
 static float  J_errHist[HIST_LEN];
 static float  B_errHist[HIST_LEN];
 static int    histHead = 0;
 static int    histCount = 0;
 
-// ===== 参数调节 =====
+// 参数调节
 static float  editArmature = 0.0f;  // 附加惯量 dof_armature，直接影响 J_true
 static float  editDamping = 0.0f;  // 阻尼 dof_damping，即 B_true
 
-// =========================================================
-// 内部函数
-// =========================================================
 
+// 内部函数
 // 2×2 法方程解析求解
 static void solve_ls()
 {
@@ -111,9 +109,8 @@ static void apply_params(mjModel* m, mjData* d)
 }
 
 
-// =========================================================
-// 对外接口
-// =========================================================
+
+// 对外接口，由 main.cpp 调用
 
 void mode2_init(mjModel* m, mjData* d)
 {
@@ -135,10 +132,10 @@ void mode2_init(mjModel* m, mjData* d)
     if (targetAct < 0)
         printf("[Mode2] Warning: actuator '%s' not found\n", TARGET_ACT);
 
-    // ---- 真实阻尼 ----
+    // 真实阻尼
     B_true = (targetDof >= 0) ? m->dof_damping[targetDof] : 0.0;
 
-    // ---- 真实惯量：质量矩阵对角元 ----
+    // 真实惯量：质量矩阵对角元
     mj_forward(m, d);
     if (targetDof >= 0) {
         int nv = m->nv;
@@ -193,7 +190,7 @@ void mode2_step(mjModel* m, mjData* d)
 
 void mode2_render_ui()
 {
-    // ===== 窗口1：控制 + 参数对比 =====
+    // 窗口1：控制 + 参数对比
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(340, 300), ImGuiCond_Always);
     ImGui::Begin("参数辨识控制", nullptr,
@@ -245,9 +242,9 @@ void mode2_render_ui()
         mode2_cleanup();
         currentMode = AppMode::MENU;
     }
-    ImGui::End();  // 窗口1
+    ImGui::End();
 
-    // ===== 窗口2：收敛曲线 =====
+    // 窗口2：收敛曲线
     ImGui::SetNextWindowPos(ImVec2(10, 320), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(340, 270), ImGuiCond_Always);
     ImGui::Begin("误差收敛曲线", nullptr,
@@ -280,9 +277,9 @@ void mode2_render_ui()
         ImGui::PlotLines("##berr", tmpB, histCount, 0, ovlB, 0.0f, maxB * 1.3f, ImVec2(-1, 95));
         ImGui::PopStyleColor();
     }
-    ImGui::End();  // 窗口2
+    ImGui::End();
 
-    // ===== 窗口3：参数调节 =====
+    // 窗口3：参数调节
     ImGui::SetNextWindowPos(ImVec2(10, 600), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(340, 155), ImGuiCond_Always);
     ImGui::Begin("参数调节 & 重新实验", nullptr,
@@ -302,7 +299,7 @@ void mode2_render_ui()
     if (ImGui::Button("应用并重置", ImVec2(-1, 28)))
         apply_params(m, d);
 
-    ImGui::End();  // 窗口3
+    ImGui::End(); 
 }
 
 

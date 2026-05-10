@@ -17,12 +17,12 @@ AppMode currentMode = AppMode::MENU;
 float   timeScale = 1.0f;
 double  baseTimestep = 0.002;
 
-// ===== 相机状态（主循环用）=====
+// 相机状态
 static bool   button_left = false;
 static bool   button_right = false;
 static double lastx = 0, lasty = 0;
 
-// ===== GLFW 回调 =====
+// GLFW 处理鼠标键盘输入
 void mouse_button(GLFWwindow* window, int button, int act, int mods)
 {
     ImGui_ImplGlfw_MouseButtonCallback(window, button, act, mods);
@@ -72,14 +72,15 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset)
 {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
     if (ImGui::GetIO().WantCaptureMouse) return;
-    mjv_moveCamera(m, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &scn, &cam);
+	mjv_moveCamera(m, mjMOUSE_ZOOM, 0, 0.05 * yoffset, &scn, &cam);     // 这里其实应该是-0.05，但反过来更符合用户习惯
 }
 
+// 优化imgui默认ui主题
 static void apply_dark_theme()
 {
     ImGuiStyle& s = ImGui::GetStyle();
 
-    // ===== 圆角与边框 =====
+    // 圆角与边框
     s.WindowRounding = 6.0f;
     s.FrameRounding = 4.0f;
     s.GrabRounding = 4.0f;
@@ -87,12 +88,12 @@ static void apply_dark_theme()
     s.WindowBorderSize = 1.0f;
     s.FrameBorderSize = 0.5f;
 
-    // ===== 间距 =====
+    // 间距
     s.WindowPadding = ImVec2(10, 8);
     s.FramePadding = ImVec2(6, 3);
     s.ItemSpacing = ImVec2(6, 4);
 
-    // ===== 颜色 =====
+    // 颜色
     ImVec4* c = s.Colors;
 
     // 背景
@@ -165,7 +166,7 @@ static void apply_dark_theme()
     c[ImGuiCol_NavHighlight] = ImVec4(0.00f, 0.72f, 1.00f, 1.00f);
 }
 
-// ===== 起始菜单 =====
+// 起始菜单
 static void render_menu()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -199,9 +200,10 @@ static void render_menu()
     ImGui::End();
 }
 
-// ===== main =====
+// ===== MAIN =====
 int main(void)
 {
+    // 加载模型
     char error[1000];
     m = mj_loadXML("model_formal/Adroit/Adroit_hand.xml", nullptr, error, 1000);
     if (!m) { printf("模型加载失败: %s\n", error); return 1; }
@@ -209,6 +211,7 @@ int main(void)
     baseTimestep = m->opt.timestep;
 
 
+	// 初始化GLFW和窗口
     if (!glfwInit()) return 1;
     GLFWwindow* window = glfwCreateWindow(1280, 960, "灵巧手仿真平台", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -218,6 +221,7 @@ int main(void)
     glfwSetScrollCallback(window, scroll);
 
 
+	// 初始化MuJoCo渲染器
     mjv_defaultCamera(&cam);
     mjv_defaultOption(&opt);
     mjv_defaultPerturb(&pert);
@@ -241,11 +245,12 @@ int main(void)
     scn.flags[mjRND_REFLECTION] = 1;
 
 
+	// 初始化ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
 
-    // ===== 字体：Consolas（英文/数字）+ msyh（中文）合并 =====
+    // 加载字体
     ImFontConfig baseCfg;
     baseCfg.OversampleH = 2;
     baseCfg.OversampleV = 2;
@@ -258,7 +263,7 @@ int main(void)
     io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msyh.ttc", 15.5f, &mergeCfg,
         io.Fonts->GetGlyphRangesChineseFull());
 
-    // ===== 应用暗黑主题 =====
+    // 应用优化后暗黑主题
     apply_dark_theme();
 
     ImGui_ImplGlfw_InitForOpenGL(window, false);
@@ -269,6 +274,7 @@ int main(void)
     mjv_updateScene(m, d, &opt, nullptr, &cam, mjCAT_ALL, &scn);
 
 
+	// 主循环
     while (!glfwWindowShouldClose(window))
     {
         m->opt.timestep = baseTimestep * (double)timeScale;
@@ -278,13 +284,13 @@ int main(void)
         mjrRect viewport = { 0, 0, W, H };
 
         if (currentMode == AppMode::MENU) {
-            mjr_render(viewport, &scn, &con);   // 静态背景
+            mjr_render(viewport, &scn, &con);   // 渲染3D场景到OpenGL
         }
         else {
             if (currentMode == AppMode::MODE1) mode1_step(m, d);
             else if (currentMode == AppMode::MODE2) mode2_step(m, d);
 
-            mjvPerturb* pertPtr = (currentMode == AppMode::MODE1) ? &pert : nullptr;
+            mjvPerturb* pertPtr = (currentMode == AppMode::MODE1) ? &pert : nullptr;    // MODE 2 禁用ctrl扰动
             mjv_updateScene(m, d, &opt, pertPtr, &cam, mjCAT_ALL, &scn);
 
             if (currentMode == AppMode::MODE1) mode1_inject_geoms(scn);

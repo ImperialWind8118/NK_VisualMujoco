@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdio>
 
-// ===== 路径4(1): 关节监测 =====
+// 关节监测面板
 static constexpr int N_MON = 5;
 static const char* MON_NAMES[N_MON] = { "FFJ2","MFJ2","RFJ2","LFJ2","THJ3" };
 static const char* MON_LABELS[N_MON] = { "食指 FFJ2","中指 MFJ2","无名 RFJ2","小指 LFJ2","拇指 THJ3" };
@@ -13,7 +13,7 @@ static int    monQposAdr[N_MON];
 static double monJntMin[N_MON];
 static double monJntMax[N_MON];
 
-// ===== 路径4(2): 指尖轨迹 =====
+// 指尖轨迹留影
 static constexpr int N_TIPS = 5;
 static constexpr int TRAIL_LEN = 100;
 static const char* TIP_NAMES[N_TIPS] = { "S_fftip","S_mftip","S_rftip","S_lftip","S_thtip" };
@@ -28,7 +28,7 @@ static int   tipSiteId[N_TIPS];
 static float trailPos[N_TIPS][TRAIL_LEN][3];
 static int   trailHead = 0, trailCount = 0;
 
-// ===== 工具函数 =====
+// 工具函数，在场景中注入一条线段
 static void injectLine(mjvScene& s,
     float ax, float ay, float az,
     float bx, float by, float bz,
@@ -43,7 +43,9 @@ static void injectLine(mjvScene& s,
     g.rgba[2] = col[2]; g.rgba[3] = col[3] * alpha;
 }
 
-// ===== 对外接口 =====
+
+// 对外接口，由 main.cpp 调用
+
 void mode1_init(mjModel* m, mjData* d)
 {
     mj_resetData(m, d);
@@ -102,13 +104,14 @@ void mode1_inject_geoms(mjvScene& scn)
     }
 }
 
+// UI绘制
 void mode1_render_ui()
 {
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(320, 115), ImGuiCond_Always);
     ImGui::Begin("仿真控制", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-    ImGui::TextDisabled("Ctrl + 左键拖拽：移动指节");
+    ImGui::TextDisabled("Ctrl + 左键拖拽/右键旋转：移动指节");
     ImGui::SliderFloat("时间流逝速度", &timeScale, 0.0f, 3.0f, "%.2fx");
     if (ImGui::Button("返回主菜单")) { mode1_cleanup(); currentMode = AppMode::MENU; }
     ImGui::End();
