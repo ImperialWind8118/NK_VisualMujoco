@@ -10,9 +10,9 @@ static const char* TARGET_ACT = "A_FFJ2";
 static constexpr double EXCITE_AMP = 0.6;   // rad幅度（0.8±0.6 在 [0,1.6] 内）
 static constexpr double EXCITE_FREQ = 1.0;   // Hz
 static constexpr double WARMUP_TIME = 0.5;   // s
-static constexpr int    MAX_SAMPLES = 3000;
+static constexpr int    WINDOW_SIZE = 50;   // 滑动窗口大小
+static constexpr int    LS_INTERVAL = 3;    // 每3个新样本求解一次
 static constexpr int    HIST_LEN = 200;
-static constexpr int    LS_INTERVAL = 30;    // 每30个新样本求解一次
 
 // ===== 运行状态 =====
 static int    targetDof = -1;
@@ -25,9 +25,9 @@ static double elapsed = 0.0;
 static bool   collecting = true;  // 未达MAX_SAMPLES时持续采样
 
 // ===== LS 数据缓冲 =====
-static double lsA[MAX_SAMPLES][2]; // 每行: [q̈, q̇]
-static double lsT[MAX_SAMPLES];    // τ_net
-static int    lsCount = 0;
+static double lsA[WINDOW_SIZE][2];  // 循环缓冲，只保留最近50个样本
+static double lsT[WINDOW_SIZE];
+static int    lsCount = 0; // 累计总样本数（可超过WINDOW_SIZE）
 static int    lsSinceLastSolve = 0;
 
 // ===== 收敛历史（环形缓冲）=====
@@ -43,12 +43,13 @@ static int    histCount = 0;
 // 2×2 法方程解析求解
 static void solve_ls()
 {
-    if (lsCount < 4) return;
+    int n = (lsCount < WINDOW_SIZE) ? lsCount : WINDOW_SIZE;
+    if (n < 4) return;
 
     double ATA00 = 0, ATA01 = 0, ATA11 = 0;
     double ATb0 = 0, ATb1 = 0;
 
-    for (int i = 0; i < lsCount; i++) {
+    for (int i = 0; i < n; i++) {
         double a0 = lsA[i][0], a1 = lsA[i][1], b = lsT[i];
         ATA00 += a0 * a0;
         ATA01 += a0 * a1;
@@ -56,10 +57,8 @@ static void solve_ls()
         ATb0 += a0 * b;
         ATb1 += a1 * b;
     }
-
     double det = ATA00 * ATA11 - ATA01 * ATA01;
     if (fabs(det) < 1e-14) return;
-
     J_hat = (ATA11 * ATb0 - ATA01 * ATb1) / det;
     B_hat = (ATA00 * ATb1 - ATA01 * ATb0) / det;
 }
@@ -145,13 +144,14 @@ void mode2_step(mjModel* m, mjData* d)
     double q_dot = d->qvel[targetDof];
     double tau = d->qfrc_actuator[targetDof] - d->qfrc_bias[targetDof];
 
-    lsA[lsCount][0] = q_ddot;
-    lsA[lsCount][1] = q_dot;
-    lsT[lsCount] = tau;
+    int idx = lsCount % WINDOW_SIZE;   // 循环写入
+    lsA[idx][0] = q_ddot;
+    lsA[idx][1] = q_dot;
+    lsT[idx] = tau;
     lsCount++;
     lsSinceLastSolve++;
 
-    if (lsCount >= MAX_SAMPLES) collecting = false;
+    // 去掉 collecting = false 的条件，让采样持续进行
 
     if (lsSinceLastSolve >= LS_INTERVAL) {
         solve_ls();
@@ -173,10 +173,8 @@ void mode2_render_ui()
 
     // 激励信息
     ImGui::TextDisabled("激励：%s   %.2f rad @ %.1f Hz", TARGET_JOINT, EXCITE_AMP, EXCITE_FREQ);
-    if (collecting)
-        ImGui::Text("采样中：%d / %d", lsCount, MAX_SAMPLES);
-    else
-        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "采样完成：%d 组", MAX_SAMPLES);
+    int inWindow = (lsCount < WINDOW_SIZE) ? lsCount : WINDOW_SIZE;
+    ImGui::Text("滑动窗口：%d / %d    累计：%d", inWindow, WINDOW_SIZE, lsCount);
 
     ImGui::Separator();
     ImGui::Spacing();
