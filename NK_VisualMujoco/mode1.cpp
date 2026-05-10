@@ -135,6 +135,29 @@ void mode1_render_ui()
         ImGui::PopStyleColor();
     }
     ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(10, 355), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(320, 70), ImGuiCond_Always);
+    ImGui::Begin("可视化控制", nullptr,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+    bool jointVis = (opt.flags[mjVIS_JOINT] != 0);
+    if (jointVis) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.10f, 0.55f, 0.45f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.15f, 0.70f, 0.58f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.08f, 0.42f, 0.35f, 1.00f));
+    }
+    else {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.18f, 0.22f, 0.30f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.25f, 0.30f, 0.40f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.14f, 0.18f, 0.25f, 1.00f));
+    }
+    if (ImGui::Button(jointVis ? "关节坐标轴  [ 开启 ]" : "关节坐标轴  [ 关闭 ]",
+        ImVec2(-1, 32)))
+        opt.flags[mjVIS_JOINT] = jointVis ? 0 : 1;
+    ImGui::PopStyleColor(3);
+
+    ImGui::End();
 }
 
 void mode1_cleanup()

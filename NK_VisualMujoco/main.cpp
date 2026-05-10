@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
-// ===== 全局量定义 =====
+// MuJoCo全局变量定义
 mjModel* m = nullptr;
 mjData* d = nullptr;
 mjvScene   scn;
@@ -223,6 +223,22 @@ int main(void)
     mjv_defaultPerturb(&pert);
     mjv_makeScene(m, &scn, 4000);
     mjr_makeContext(m, &con, mjFONTSCALE_150);
+    // 世界质感增强
+    m->vis.headlight.ambient[0] = 0.05f; m->vis.headlight.ambient[1] = 0.08f; m->vis.headlight.ambient[2] = 0.18f;
+    m->vis.headlight.diffuse[0] = 0.65f; m->vis.headlight.diffuse[1] = 0.72f; m->vis.headlight.diffuse[2] = 0.92f;
+    m->vis.headlight.specular[0] = 0.4f; m->vis.headlight.specular[1] = 0.45f; m->vis.headlight.specular[2] = 0.6f;
+
+    con.fogRGBA[0] = 0.03f;
+    con.fogRGBA[1] = 0.05f;
+    con.fogRGBA[2] = 0.12f;
+    con.fogRGBA[3] = 1.0f;
+    con.fogStart = 2.5f * m->stat.extent;  
+    con.fogEnd = 8.0f * m->stat.extent;  
+
+    scn.flags[mjRND_FOG] = 1;
+    scn.flags[mjRND_HAZE] = 1;
+    scn.flags[mjRND_SHADOW] = 1;
+    scn.flags[mjRND_REFLECTION] = 1;
 
 
     IMGUI_CHECKVERSION();

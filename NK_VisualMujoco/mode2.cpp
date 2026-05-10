@@ -36,6 +36,10 @@ static float  B_errHist[HIST_LEN];
 static int    histHead = 0;
 static int    histCount = 0;
 
+// ===== 参数调节 =====
+static float  editArmature = 0.0f;  // 附加惯量 dof_armature，直接影响 J_true
+static float  editDamping = 0.0f;  // 阻尼 dof_damping，即 B_true
+
 // =========================================================
 // 内部函数
 // =========================================================
@@ -84,6 +88,29 @@ static void reset_estimation()
     memset(B_errHist, 0, sizeof(B_errHist));
 }
 
+static void apply_params(mjModel* m, mjData* d)
+{
+    if (targetDof < 0) return;
+    if (editArmature < 0.0f) editArmature = 0.0f;
+    if (editDamping < 0.0f) editDamping = 0.0f;
+
+    // 写入模型
+    m->dof_armature[targetDof] = (mjtNum)editArmature;
+    m->dof_damping[targetDof] = (mjtNum)editDamping;
+    B_true = editDamping;
+
+    // 重新计算 J_true（armature 已计入质量矩阵对角元）
+    mj_resetData(m, d);
+    mj_forward(m, d);
+    int nv = m->nv;
+    std::vector<mjtNum> M((size_t)nv * nv, 0.0);
+    mj_fullM(m, M.data(), d->qM);
+    J_true = M[(size_t)targetDof * nv + targetDof];
+
+    reset_estimation();
+}
+
+
 // =========================================================
 // 对外接口
 // =========================================================
@@ -124,6 +151,10 @@ void mode2_init(mjModel* m, mjData* d)
     }
 
     printf("[Mode2] J_true = %.6f   B_true = %.6f\n", J_true, B_true);
+
+    // 初始化编辑器为当前模型值（新增）
+    editArmature = (targetDof >= 0) ? (float)m->dof_armature[targetDof] : 0.0f;
+    editDamping = (targetDof >= 0) ? (float)m->dof_damping[targetDof] : 0.0f;
 }
 
 void mode2_step(mjModel* m, mjData* d)
@@ -170,43 +201,34 @@ void mode2_render_ui()
 
     ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 3.0f, "%.2fx");
     ImGui::Spacing();
-
-    // 激励信息
     ImGui::TextDisabled("激励：%s   %.2f rad @ %.1f Hz", TARGET_JOINT, EXCITE_AMP, EXCITE_FREQ);
     int inWindow = (lsCount < WINDOW_SIZE) ? lsCount : WINDOW_SIZE;
     ImGui::Text("滑动窗口：%d / %d    累计：%d", inWindow, WINDOW_SIZE, lsCount);
-
     ImGui::Separator();
     ImGui::Spacing();
 
-    // 参数对比表
     ImGui::Columns(3, "params", true);
-    ImGui::TextDisabled("参数");    ImGui::NextColumn();
-    ImGui::TextDisabled("真实值");  ImGui::NextColumn();
-    ImGui::TextDisabled("估计值");  ImGui::NextColumn();
+    ImGui::TextDisabled("参数");   ImGui::NextColumn();
+    ImGui::TextDisabled("真实值"); ImGui::NextColumn();
+    ImGui::TextDisabled("估计值"); ImGui::NextColumn();
     ImGui::Separator();
 
-    // J 行
     ImGui::Text("J (惯量)"); ImGui::NextColumn();
     ImGui::Text("%.5f", J_true); ImGui::NextColumn();
     {
-        bool bad = (lsCount > 10) &&
-            (fabs(J_hat - J_true) > 0.25 * (fabs(J_true) + 1e-12));
-        ImGui::PushStyleColor(ImGuiCol_Text,
-            bad ? ImVec4(1.f, 0.4f, 0.4f, 1.f) : ImVec4(0.4f, 1.f, 0.4f, 1.f));
+        bool bad = (lsCount > 10) && (fabs(J_hat - J_true) > 0.25 * (fabs(J_true) + 1e-12));
+        ImGui::PushStyleColor(ImGuiCol_Text, bad ? ImVec4(1.f, 0.4f, 0.4f, 1.f) : ImVec4(0.4f, 1.f, 0.4f, 1.f));
         ImGui::Text("%.5f", J_hat);
         ImGui::PopStyleColor();
     }
     ImGui::NextColumn();
 
-    // B 行
     ImGui::Text("B (阻尼)"); ImGui::NextColumn();
     ImGui::Text("%.5f", B_true); ImGui::NextColumn();
     {
         double ref = fabs(B_true) > 1e-10 ? fabs(B_true) : 1e-4;
         bool bad = (lsCount > 10) && (fabs(B_hat - B_true) > 0.25 * ref);
-        ImGui::PushStyleColor(ImGuiCol_Text,
-            bad ? ImVec4(1.f, 0.4f, 0.4f, 1.f) : ImVec4(0.4f, 1.f, 0.4f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_Text, bad ? ImVec4(1.f, 0.4f, 0.4f, 1.f) : ImVec4(0.4f, 1.f, 0.4f, 1.f));
         ImGui::Text("%.5f", B_hat);
         ImGui::PopStyleColor();
     }
@@ -214,7 +236,6 @@ void mode2_render_ui()
 
     ImGui::Columns(1);
     ImGui::Spacing();
-
     if (ImGui::Button("重置估计", ImVec2(150, 0))) {
         mj_resetData(m, d);
         reset_estimation();
@@ -224,7 +245,7 @@ void mode2_render_ui()
         mode2_cleanup();
         currentMode = AppMode::MENU;
     }
-    ImGui::End();
+    ImGui::End();  // 窗口1
 
     // ===== 窗口2：收敛曲线 =====
     ImGui::SetNextWindowPos(ImVec2(10, 320), ImGuiCond_Always);
@@ -234,41 +255,56 @@ void mode2_render_ui()
 
     if (histCount < 2) {
         ImGui::TextDisabled("等待热身期结束并积累足够样本...");
-        ImGui::End();
-        return;
     }
+    else {
+        static float tmpJ[HIST_LEN], tmpB[HIST_LEN];
+        float maxJ = 1e-8f, maxB = 1e-8f;
+        for (int i = 0; i < histCount; i++) {
+            int idx = (histHead - histCount + i + HIST_LEN) % HIST_LEN;
+            tmpJ[i] = J_errHist[idx];
+            tmpB[i] = B_errHist[idx];
+            if (tmpJ[i] > maxJ) maxJ = tmpJ[i];
+            if (tmpB[i] > maxB) maxB = tmpB[i];
+        }
+        char ovlJ[48], ovlB[48];
+        snprintf(ovlJ, sizeof(ovlJ), "cur=%.5f", tmpJ[histCount - 1]);
+        snprintf(ovlB, sizeof(ovlB), "cur=%.5f", tmpB[histCount - 1]);
 
-    // 将环形缓冲线性化用于 PlotLines
-    static float tmpJ[HIST_LEN], tmpB[HIST_LEN];
-    float maxJ = 1e-8f, maxB = 1e-8f;
-    for (int i = 0; i < histCount; i++) {
-        int idx = (histHead - histCount + i + HIST_LEN) % HIST_LEN;
-        tmpJ[i] = J_errHist[idx];
-        tmpB[i] = B_errHist[idx];
-        if (tmpJ[i] > maxJ) maxJ = tmpJ[i];
-        if (tmpB[i] > maxB) maxB = tmpB[i];
+        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "|J_hat - J_true|");
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+        ImGui::PlotLines("##jerr", tmpJ, histCount, 0, ovlJ, 0.0f, maxJ * 1.3f, ImVec2(-1, 95));
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "|B_hat - B_true|");
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.8f, 0.3f, 1.0f));
+        ImGui::PlotLines("##berr", tmpB, histCount, 0, ovlB, 0.0f, maxB * 1.3f, ImVec2(-1, 95));
+        ImGui::PopStyleColor();
     }
+    ImGui::End();  // 窗口2
 
-    char ovlJ[48], ovlB[48];
-    snprintf(ovlJ, sizeof(ovlJ), "cur=%.5f", tmpJ[histCount - 1]);
-    snprintf(ovlB, sizeof(ovlB), "cur=%.5f", tmpB[histCount - 1]);
+    // ===== 窗口3：参数调节 =====
+    ImGui::SetNextWindowPos(ImVec2(10, 600), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(340, 155), ImGuiCond_Always);
+    ImGui::Begin("参数调节 & 重新实验", nullptr,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
-    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "|J_hat - J_true|");
-    ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
-    ImGui::PlotLines("##jerr", tmpJ, histCount, 0, ovlJ,
-        0.0f, maxJ * 1.3f, ImVec2(-1, 95));
-    ImGui::PopStyleColor();
-
+    ImGui::TextDisabled("修改参数后点击「应用并重置」开始新一轮实验");
     ImGui::Spacing();
+    ImGui::Text("附加惯量 armature");
+    ImGui::SameLine(); ImGui::SetNextItemWidth(-1);
+    ImGui::DragFloat("##armature", &editArmature, 0.0001f, 0.0f, 1.0f, "%.4f");
+    ImGui::Text("阻    尼 damping ");
+    ImGui::SameLine(); ImGui::SetNextItemWidth(-1);
+    ImGui::DragFloat("##damping", &editDamping, 0.001f, 0.0f, 5.0f, "%.4f");
+    ImGui::Spacing();
+    ImGui::TextDisabled("当前  J_true = %.5f    B_true = %.5f", J_true, B_true);
+    ImGui::Spacing();
+    if (ImGui::Button("应用并重置", ImVec2(-1, 28)))
+        apply_params(m, d);
 
-    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "|B_hat - B_true|");
-    ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(1.0f, 0.8f, 0.3f, 1.0f));
-    ImGui::PlotLines("##berr", tmpB, histCount, 0, ovlB,
-        0.0f, maxB * 1.3f, ImVec2(-1, 95));
-    ImGui::PopStyleColor();
-
-    ImGui::End();
+    ImGui::End();  // 窗口3
 }
+
 
 void mode2_cleanup()
 {
