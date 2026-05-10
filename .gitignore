@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# 允许 release 发布文件夹（区别于 VS 的 Release 编译输出目录）
+!release/
+!release/**
