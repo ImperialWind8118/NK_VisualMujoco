@@ -21,7 +21,8 @@
 
 	<option	timestep="0.002"
 			iterations="20"
-			apirate="200">
+			apirate="200"
+			gravity="0 0 0">
 	</option>
 
 	<visual>
