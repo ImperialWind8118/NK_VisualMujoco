@@ -170,34 +170,60 @@ static void apply_dark_theme()
 static void render_menu()
 {
     ImGuiIO& io = ImGui::GetIO();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(40, 36));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 18));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 14));
+
     ImGui::SetNextWindowPos(
         ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
         ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(420, 240), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(620, 640), ImGuiCond_Always);
     ImGui::Begin("##menu", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    float textW = ImGui::CalcTextSize("灵巧手仿真平台").x;
-    ImGui::SetCursorPosX((420.0f - textW) * 0.5f);
+    ImGui::SetWindowFontScale(1.8f);
+    float titleW = ImGui::CalcTextSize("灵巧手仿真平台").x;
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - titleW) * 0.5f);
     ImGui::Text("灵巧手仿真平台");
-    ImGui::Separator();
-    ImGui::Spacing();
 
-    ImGui::TextWrapped("模式一：交互可视化");
-    ImGui::TextDisabled("  鼠标拖拽 · 时间缩放 · 关节监测 · 轨迹留影");
-    if (ImGui::Button("进入模式一", ImVec2(-1, 42))) {
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing(); ImGui::Spacing();
+
+    ImGui::SetWindowFontScale(1.6f);
+    ImGui::Text("模式一：交互可视化");
+    ImGui::SetWindowFontScale(1.4f);
+    ImGui::TextDisabled("  鼠标拖拽 · 时间缩放 · 关节监测 · 轨迹留影 · 关节坐标轴切换");
+    ImGui::Spacing();
+    ImGui::SetWindowFontScale(1.5f);
+    if (ImGui::Button("进入模式一", ImVec2(-1, 52))) {
         mode1_init(m, d);
         currentMode = AppMode::MODE1;
     }
+    ImGui::SetWindowFontScale(1.0f);
+
+    ImGui::Spacing(); ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing(); ImGui::Spacing();
+
+    ImGui::SetWindowFontScale(1.6f);
+    ImGui::Text("模式二：参数辨识");
+    ImGui::SetWindowFontScale(1.4f);
+    ImGui::TextDisabled("  单指简谐运动 · 实时最小二乘 · 误差收敛曲线 · 参数调节重置");
     ImGui::Spacing();
-    ImGui::TextWrapped("模式二：参数辨识");
-    ImGui::TextDisabled("  单指简谐运动 · 实时最小二乘 · 误差收敛曲线");
-    if (ImGui::Button("进入模式二", ImVec2(-1, 42))) {
+    ImGui::SetWindowFontScale(1.5f);
+    if (ImGui::Button("进入模式二", ImVec2(-1, 52))) {
         mode2_init(m, d);
         currentMode = AppMode::MODE2;
     }
+    ImGui::SetWindowFontScale(1.0f);
+
     ImGui::End();
+    ImGui::PopStyleVar(3);
 }
 
 // ===== MAIN =====

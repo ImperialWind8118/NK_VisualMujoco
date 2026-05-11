@@ -133,7 +133,7 @@ static void buildPoseSequence() {
     }
 }
 
-// 公开接口，由 main.cpp 调用
+// 公开接口
 
 void controller_init(mjModel* m, mjData* d)
 {
@@ -154,6 +154,7 @@ void controller_init(mjModel* m, mjData* d)
     A.THJ2 = findAct(m, "A_THJ2"); A.THJ1 = findAct(m, "A_THJ1");
     A.THJ0 = findAct(m, "A_THJ0");
 
+    numPoses = 0 ;
     buildPoseSequence();
     memset(prevCtrl, 0, sizeof(prevCtrl));
     poseIdx = 0;

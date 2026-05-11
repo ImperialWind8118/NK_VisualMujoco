@@ -24,11 +24,12 @@ static const float TIP_COLORS[N_TIPS][4] = {
     {1.0f,  1.0f, 0.35f, 1.0f},
     {0.35f, 1.0f, 1.0f,  1.0f},
 };
+// 存储指尖轨迹的数据结构、缓冲区
 static int   tipSiteId[N_TIPS];
 static float trailPos[N_TIPS][TRAIL_LEN][3];
 static int   trailHead = 0, trailCount = 0;
 
-// 工具函数，在场景中注入一条线段
+// 渲染轨迹函数，在场景中注入一条线段
 static void injectLine(mjvScene& s,
     float ax, float ay, float az,
     float bx, float by, float bz,
@@ -76,6 +77,7 @@ void mode1_step(mjModel* m, mjData* d)
     for (int f = 0; f < N_TIPS; f++) {
         int sid = tipSiteId[f];
         if (sid < 0) continue;
+        // 指尖位置采样
         const mjtNum* p = d->site_xpos + 3 * sid;
         trailPos[f][trailHead][0] = (float)p[0];
         trailPos[f][trailHead][1] = (float)p[1];
@@ -85,6 +87,7 @@ void mode1_step(mjModel* m, mjData* d)
     if (trailCount < TRAIL_LEN) trailCount++;
 }
 
+// 在场景中注入指尖轨迹的线段，形成留影效果
 void mode1_inject_geoms(mjvScene& scn)
 {
     if (trailCount < 2) return;
@@ -169,6 +172,7 @@ void mode1_cleanup()
     trailHead = 0;   trailCount = 0;
 }
 
+// 按住ctrl键时的鼠标点击事件，选中并激活一个指节进行拖动
 void mode1_ctrl_click(GLFWwindow* window, int button, int act, double cx, double cy)
 {
     if (act == GLFW_PRESS) {

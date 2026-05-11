@@ -42,7 +42,7 @@ static float  editDamping = 0.0f;  // 阻尼 dof_damping，即 B_true
 
 
 // 内部函数
-// 2×2 法方程解析求解
+// 最小二乘法，2×2 矩阵方程解析求解
 static void solve_ls()
 {
     int n = (lsCount < WINDOW_SIZE) ? lsCount : WINDOW_SIZE;
@@ -59,12 +59,13 @@ static void solve_ls()
         ATb0 += a0 * b;
         ATb1 += a1 * b;
     }
-    double det = ATA00 * ATA11 - ATA01 * ATA01;
+    double det = ATA00 * ATA11 - ATA01 * ATA01;     // 克拉默法则求解线性方程组
     if (fabs(det) < 1e-14) return;
-    J_hat = (ATA11 * ATb0 - ATA01 * ATb1) / det;
+	J_hat = (ATA11 * ATb0 - ATA01 * ATb1) / det;
     B_hat = (ATA00 * ATb1 - ATA01 * ATb0) / det;
 }
 
+// 记录误差历史
 static void push_history()
 {
     J_errHist[histHead] = (float)fabs(J_hat - J_true);
@@ -86,13 +87,13 @@ static void reset_estimation()
     memset(B_errHist, 0, sizeof(B_errHist));
 }
 
+// 更改模型参数重新实验
 static void apply_params(mjModel* m, mjData* d)
 {
     if (targetDof < 0) return;
     if (editArmature < 0.0f) editArmature = 0.0f;
     if (editDamping < 0.0f) editDamping = 0.0f;
 
-    // 写入模型
     m->dof_armature[targetDof] = (mjtNum)editArmature;
     m->dof_damping[targetDof] = (mjtNum)editDamping;
     B_true = editDamping;
@@ -188,6 +189,7 @@ void mode2_step(mjModel* m, mjData* d)
     }
 }
 
+// UI绘制
 void mode2_render_ui()
 {
     // 窗口1：控制 + 参数对比
@@ -196,7 +198,7 @@ void mode2_render_ui()
     ImGui::Begin("参数辨识控制", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
-    ImGui::SliderFloat("Time Scale", &timeScale, 0.0f, 3.0f, "%.2fx");
+    ImGui::SliderFloat("时间流逝速度", &timeScale, 0.0f, 3.0f, "%.2fx");
     ImGui::Spacing();
     ImGui::TextDisabled("激励：%s   %.2f rad @ %.1f Hz", TARGET_JOINT, EXCITE_AMP, EXCITE_FREQ);
     int inWindow = (lsCount < WINDOW_SIZE) ? lsCount : WINDOW_SIZE;

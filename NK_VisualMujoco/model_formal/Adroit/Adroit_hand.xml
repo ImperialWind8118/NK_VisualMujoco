@@ -43,10 +43,10 @@
 		</body>
 
 		<!--
-		<body name="ball" pos=".0 -.1 .4">
+		<body name="ball" pos="-.1 -.1 .4">
 			<geom type="sphere" size=".015" rgba=".7 .2 .2 1"/>
 			<joint name="falling_ball" class="free"/>
-		</body>	-->
+		</body>		-->
 
 	</worldbody>
 
