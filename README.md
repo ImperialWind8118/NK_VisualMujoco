@@ -1,1 +1,2 @@
 # NK_VisualMujoco
+Release版本已发布，可点击release下载latest版本
